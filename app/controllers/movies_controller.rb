@@ -20,6 +20,13 @@ class MoviesController < ApplicationController
     else
       @movies = Movie.all
     end
+    session[:filtered_ratings] = nil
+    if params[:ratings] != nil
+      @filtered_ratings = params[:ratings].keys
+      session[:filtered_ratings] = @filtered_ratings
+      @movies = Movie.all.where({rating: @filtered_ratings})
+    end
+    @all_ratings = Movie.select(:rating).distinct
   end
 
   def new
