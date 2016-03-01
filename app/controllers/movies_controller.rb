@@ -12,21 +12,44 @@ class MoviesController < ApplicationController
 
   def index
     if params[:title_sort] == "on"
-      @movies = Movie.all.order(:title)
-      @movie_highlight = "hilite"
+      session[:movie_highlight] = "hilite"
+      session[:date_highlight] = ""
     elsif params[:date_sort] == "on"
+      session[:movie_highlight] = ""
+      session[:date_highlight] = "hilite"
+    end
+    if session[:movie_highlight] == "hilite"
+      @movies = Movie.all.order(:title)
+    elsif session[:date_highlight] == "hilite"
       @movies = Movie.all.order(:release_date)
-      @date_highlight = "hilite"
     else
       @movies = Movie.all
     end
-    session[:filtered_ratings] = nil
     if params[:ratings] != nil
-      @filtered_ratings = params[:ratings].keys
-      session[:filtered_ratings] = @filtered_ratings
-      @movies = Movie.all.where({rating: @filtered_ratings})
+      session[:filtered_ratings] = params[:ratings]
     end
     @all_ratings = Movie.select(:rating).distinct
+    if session[:filtered_ratings] == nil
+      session[:filtered_ratings] = Hash.new
+      @all_ratings.each do |ratin|
+        session[:filtered_ratings][ratin.rating] = 1
+      end
+    end
+    @movies = @movies.where({rating: session[:filtered_ratings].keys})
+    if params != nil
+      ln = params.length
+      if params[:title_sort].nil? and params[:date_sort].nil? and session[:movie_highlight] == "hilite"
+        params[:title_sort] = "on"
+      elsif params[:title_sort].nil? and params[:date_sort].nil? and session[:date_highlight] == "hilite"
+        params[:date_sort] = "on"
+      end
+      if params[:ratings].nil? and session[:filtered_ratings]
+        params[:ratings] = session[:filtered_ratings]
+      end
+      if params.length != ln
+          redirect_to movies_path(params)
+      end
+    end
   end
 
   def new
