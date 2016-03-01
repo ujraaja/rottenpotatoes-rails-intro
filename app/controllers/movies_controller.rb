@@ -11,7 +11,7 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.order("title DESC").find(:all)
+    @movies = Movie.all.order(:title)
   end
 
   def new
